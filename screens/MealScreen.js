@@ -1,4 +1,4 @@
-import React from 'react';
+import React,{useEffect,useCallback} from 'react';
 import {
     ScrollView,
     View,
@@ -9,10 +9,12 @@ import {
 } from 'react-native';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
 
-import { MEALS } from '../data/dummy-data';
+import {toggleFavouriteDispatch} from "../store/actions/meals";
+import {useSelector,useDispatch} from "react-redux";
 
 import DefaultText from '../components/DefaultText';
 import CustomButton from "../components/CustomHeaderButton";
+
 
 const ListItem = props => {
     return (
@@ -23,9 +25,20 @@ const ListItem = props => {
 };
 
 const MealDetailScreen = props => {
+    const availableMeals = useSelector(store=>store.meals.filteredMeals);
     const mealId = props.navigation.getParam('mealId');
 
-    const selectedMeal = MEALS.find(meal => meal.id === mealId);
+    const selectedMeal = availableMeals.find(meal => meal.id === mealId);
+    const dispatch = useDispatch();
+
+    const toggleDispatchHandler = useCallback(()=>{
+        dispatch(toggleFavouriteDispatch(mealId));
+    },[dispatch,mealId]);
+
+    useEffect(()=>{
+        props.navigation.setParams({mealTitle:selectedMeal.title,toggleFav:toggleDispatchHandler});
+    },[toggleDispatchHandler])
+
 
     return (
         <ScrollView>
@@ -49,18 +62,20 @@ const MealDetailScreen = props => {
 
 MealDetailScreen.navigationOptions = navigationData => {
     const mealId = navigationData.navigation.getParam('mealId');
-    const selectedMeal = MEALS.find(meal => meal.id === mealId);
+   // const selectedMeal = MEALS.find(meal => meal.id === mealId);
+   // const selectedMeal = navigationData.navigation.getParam("meal");
+    const mealTitle = navigationData.navigation.getParam("mealTitle");
+    const toggleFav = navigationData.navigation.getParam("toggleFav");
     return {
-        headerTitle: selectedMeal.title,
+        //headerTitle: selectedMeal.title,
+        headerTitle: mealTitle,
         headerRight: ()=>(
             <HeaderButtons HeaderButtonComponent={CustomButton}>
                 <Item
                     title="Favorite"
                     iconName="ios-star"
                     iconSize={25}
-                    onPress={() => {
-                        console.log('Mark as favorite!');
-                    }}
+                    onPress={toggleFav}
                 />
             </HeaderButtons>
         )
